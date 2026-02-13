@@ -1,0 +1,74 @@
+[
+  {
+    "id": "konark",
+    "name": "Konark Sun Temple",
+    "latitude": 19.8876,
+    "longitude": 86.0945,
+    "model": "models/konark.glb",
+    "poster": "assets/posters/konark-poster.jpg",
+    "thumb": "assets/thumbs/konark-thumb.jpg",
+    "audio": "audio/konark.mp3",
+    "captions": "audio/konark.vtt",
+    "location": "Konark, Odisha",
+    "era": "c.1250 CE",
+    "shortDescription": "A 13th-century Sun Temple built by Narasimhadeva I — famed for its chariot-shaped layout and exquisite stone carvings.",
+    "facts": [
+      { "year": 1250, "text": "Temple completed under Narasimhadeva I." },
+      { "year": 1800, "text": "Parts and sculpture removal recorded during the colonial era." },
+      { "year": 1984, "text": "Modern restoration and conservation initiatives started." }
+    ],
+    "quiz": [
+      { "q": "Which king built the Konark Sun Temple?", "opts": ["Narasimhadeva I", "Ashoka", "Raja Raja Chola"], "a": 0 },
+      { "q": "The temple is designed as a colossal what?", "opts": ["Chariot", "Lotus", "Temple-tower"], "a": 0 },
+      { "q": "Konark is famous for carvings of?", "opts": ["Dancers & animals", "Metalwork", "Calligraphy"], "a": 0 },
+      { "q": "Which coast is Konark near?", "opts": ["Eastern coast", "Western coast", "Northern coast"], "a": 0 }
+    ]
+  },
+  {
+    "id": "taj",
+    "name": "Taj Mahal",
+    "latitude": 27.1751,
+    "longitude": 78.0421,
+    "model": "models/tajmahal.glb",
+    "poster": "assets/posters/taj-poster.jpg",
+    "thumb": "assets/thumbs/taj-thumb.jpg",
+    "audio": "audio/tajmahal.mp3",
+    "captions": "audio/tajmahal.vtt",
+    "location": "Agra, Uttar Pradesh",
+    "era": "1631–1653",
+    "shortDescription": "Ivory-white marble mausoleum commissioned by Mughal emperor Shah Jahan in memory of Mumtaz Mahal.",
+    "facts": [
+      { "year": 1632, "text": "Construction begins under Shah Jahan." },
+      { "year": 1653, "text": "Main mausoleum completed." },
+      { "year": 2007, "text": "UNESCO World Heritage Site (recognized earlier; this entry shows modern recognition)." }
+    ],
+    "quiz": [
+      { "q": "For whom was the Taj Mahal built?", "opts": ["Mumtaz Mahal", "Jodha Bai", "Nur Jahan"], "a": 0 },
+      { "q": "Which material is primarily used in the Taj Mahal?", "opts": ["White marble", "Red sandstone", "Granite"], "a": 0 },
+      { "q": "In which city is the Taj Mahal located?", "opts": ["Agra", "Jaipur", "Delhi"], "a": 0 }
+    ]
+  },
+  {
+    "id": "jagannath",
+    "name": "Jagannath Temple",
+    "latitude": 19.8134,
+    "longitude": 85.8315,
+    "model": "models/jagannath.glb",
+    "poster": "assets/posters/jagannath-poster.jpg",
+    "thumb": "assets/thumbs/jagannath-thumb.jpg",
+    "audio": "audio/jagannath.mp3",
+    "captions": "audio/jagannath.vtt",
+    "location": "Puri, Odisha",
+    "era": "12th Century (current form)",
+    "shortDescription": "A major Hindu temple dedicated to Lord Jagannath, famous for the annual Rath Yatra chariot festival.",
+    "facts": [
+      { "year": 1100, "text": "Earliest forms and sanctuaries established in the region." },
+      { "year": 1200, "text": "Significant reconstructions shaped today's temple." },
+      { "year": 1900, "text": "Expanded pilgrim facilities and modern upkeep added." }
+    ],
+    "quiz": [
+      { "q": "The Jagannath Temple festival is called?", "opts": ["Rath Yatra", "Diwali", "Holi"], "a": 0 },
+      { "q": "The temple is located in which city?", "opts": ["Puri", "Bhubaneswar", "Cuttack"], "a": 0 }
+    ]
+  }
+]

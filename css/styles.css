@@ -1,0 +1,38 @@
+/* Simple complement styles — mostly the big design is already inlined in index.html.
+   Use this if you prefer splitting styles out. */
+
+:root {
+  --accent-1: #c2410c;
+  --bg-1: #fff7ed;
+  --glass: rgba(255,255,255,0.7);
+  --muted: #9a6b2a;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(180deg, #fff7ed 0%, #fff3e0 100%);
+  font-family: "Poppins", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+.glass {
+  background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.55));
+  backdrop-filter: blur(6px);
+  border-radius: 12px;
+}
+
+/* Utility: small toast */
+#toast {
+  min-width: 160px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(18,18,18,0.08);
+  font-weight: 600;
+}
+
+/* Quiz option states */
+.correct-answer { background-color: #10b981 !important; color: #fff !important; border-color: #10b981 !important; }
+.wrong-answer { background-color: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important; }
+
+/* Progress fill */
+.progress-fill { height: 10px; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #f97316, #fb923c); }

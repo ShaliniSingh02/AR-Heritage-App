@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pradakshina — AR Heritage Experience</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Poppins & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- model-viewer for 3D + AR -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+  <style>
+    :root{--glass: rgba(255,255,255,0.6);--accent:#c2410c}
+    html,body{height:100%}
+    body{font-family: 'Poppins', 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    .glass{background:linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.45)); backdrop-filter: blur(6px);}
+    .floaty{animation: floaty 6s ease-in-out infinite}
+    @keyframes floaty{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+    .hidden-by-js{display:none}
+    model-viewer{border-radius:14px; background:transparent; width:100%; height:52vh}
+    .correct-answer{background-color:#10b981!important;color:white!important;border-color:#10b981!important}
+    .wrong-answer{background-color:#ef4444!important;color:white!important;border-color:#ef4444!important}
+    .progress-track{background:linear-gradient(90deg,#fef3c7,#fee2b3);border-radius:999px}
+    .progress-fill{height:10px;border-radius:999px;background:linear-gradient(90deg,#f97316,#fb923c);width:0%}
+    @media (min-width:1024px){ model-viewer{height:60vh} }
+    :focus{outline:3px solid rgba(219,39,119,0.12);outline-offset:2px}
+   #chatbot-container { font-family: 'Inter', sans-serif; }
+#chatbot-box { max-height: 400px; }  /* no display or flex-direction here */
+#chatbot-messages { flex: 1; }
+/* Chatbot suggestion chips */
+.suggestion-chip {
+  background: #fff7ed;              /* light amber background */
+  color: #92400e;                   /* amber-800 text */
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  border: 1px solid #fed7aa;        /* soft border */
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.suggestion-chip:hover {
+  background: #fed7aa;
+}
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 p-6">
+  <div class="max-w-7xl mx-auto">
+    <header class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-4">
+        <div class="p-3 rounded-2xl bg-gradient-to-br from-amber-200 to-amber-400 shadow-lg">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l3.5 7.5L23 10l-6 4.5L18 22l-6-4-6 4 1-7.5L1 10l7.5-.5L12 2z" fill="white"/></svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-amber-900">Pradakshina</h1>
+          <p class="text-sm text-amber-700/80 -mt-1">Pocket heritage tours — AR · Audio · Quizzes</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="theme-toggle" class="py-2 px-3 rounded-xl glass shadow-sm text-sm">Toggle Theme</button>
+        <button id="share-app" class="py-2 px-3 rounded-xl bg-amber-600 text-white shadow hover:scale-95">Share</button>
+        <button id="profile-btn" class="py-2 px-3 rounded-xl glass shadow-sm text-sm">Profile</button>
+
+      </div>
+    </header>
+<!-- WELCOME SCREEN -->
+<div id="welcome-screen" class="fixed inset-0 bg-gradient-to-br from-amber-100 to-amber-300 flex flex-col items-center justify-center text-center p-6 z-50">
+  <h1 class="text-4xl font-bold text-amber-900 mb-4 drop-shadow">✨ Welcome to Pradakshina ✨</h1>
+  <p class="text-lg text-amber-800 mb-8 max-w-md">Explore India's timeless heritage!!</p>
+
+  <button id="start-btn"
+    class="px-6 py-3 bg-amber-700 text-white rounded-2xl text-lg shadow-lg hover:bg-amber-800 transition">
+    Get Started
+  </button>
+</div>
+
+<!-- LOGIN / CREATE ACCOUNT SCREEN -->
+<!-- LOGIN / CREATE ACCOUNT SCREEN -->
+<div id="login-screen" class="fixed inset-0 bg-white/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-6 hidden z-40">
+  <h2 class="text-3xl font-bold text-amber-900 mb-4">Welcome!</h2>
+
+  <!-- Mode buttons -->
+  <div id="login-choice" class="flex flex-col items-center">
+    <button id="login-btn"
+      class="mb-3 px-5 py-3 bg-amber-600 text-white rounded-xl w-48 shadow">
+      Login
+    </button>
+    <button id="create-btn"
+      class="px-5 py-3 border border-amber-600 text-amber-700 rounded-xl w-48 shadow">
+      Create Account
+    </button>
+  </div>
+
+  <!-- Form after choosing login/create -->
+  <div id="login-form" class="hidden w-full max-w-xs mt-4 text-left">
+    <label class="text-amber-900 text-sm">Name</label>
+    <input id="user-name" type="text" class="w-full p-3 border rounded-xl mb-3" placeholder="Enter name">
+
+    <label class="text-amber-900 text-sm">Email</label>
+    <input id="user-email" type="email" class="w-full p-3 border rounded-xl mb-4" placeholder="Enter email">
+
+    <button id="submit-login"
+      class="w-full py-3 bg-amber-700 text-white rounded-xl shadow">
+      Continue →
+    </button>
+  </div>
+</div>
+
+
+    <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section class="lg:col-span-1">
+        <div class="glass rounded-2xl p-4 shadow-md">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-semibold text-amber-900">Explore Sites</h2>
+            <div class="text-sm text-amber-700/80">Saved: <span id="saved-count">0</span></div>
+          </div>
+<!-- 📍 Near Me Button -->
+<button id="near-me-btn"
+  class="w-full py-2 mb-3 rounded-xl bg-amber-600 text-white shadow hover:bg-amber-700">
+  📍 Near Me
+</button>
+
+<!-- 📍 Near Me Results -->
+<div id="near-me-results" class="space-y-3 hidden"></div>
+
+          <div class="mb-3">
+            <input id="search-input" type="search" placeholder="Search (e.g. 'Taj', 'Konark')" class="w-full p-3 rounded-xl border border-amber-200 focus:ring-2 focus:ring-amber-300" />
+          </div>
+
+          <div id="site-list" class="space-y-3 max-h-[60vh] overflow-auto pr-2"></div>
+
+          <div class="mt-4 flex gap-2">
+            <button id="show-favs" class="flex-1 py-2 rounded-xl border border-amber-200">Favorites</button>
+            <button id="reset-btn" class="py-2 px-4 rounded-xl bg-amber-600 text-white">Reset</button>
+          </div>
+        </div>
+
+        <div class="mt-4 glass rounded-2xl p-4 shadow-md">
+          <h3 class="text-amber-900 font-semibold">Quick Tour</h3>
+          <p class="text-sm text-amber-700/80 mt-2">Tap a site card to preview. Use "View in AR" (mobile) or rotate the 3D model. Save favorites to build a personal walk.</p>
+          <div class="mt-3 space-y-2">
+            <button id="start-walk" class="w-full py-2 rounded-xl bg-amber-500 text-white">Start Guided Walk</button>
+            <button id="open-quiz-collection" class="w-full py-2 rounded-xl border border-amber-400">Open Quizzes</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="lg:col-span-2">
+        <div class="glass rounded-2xl p-4 shadow-md">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div class="lg:col-span-2">
+              <model-viewer id="viewer" src="./models/placeholder.glb" poster="assets/posters/placeholder-poster.jpg" alt="3D model preview" camera-controls auto-rotate exposure="1" shadow-intensity="1" ar ar-modes="webxr scene-viewer quick-look" interaction-prompt="auto">
+                <button slot="ar-button" class="absolute bottom-6 right-6 rounded-full px-4 py-2 bg-amber-700 text-white font-semibold shadow-lg">View in AR</button>
+              </model-viewer>
+            </div>
+
+            <div class="p-2">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h2 id="site-title" class="text-2xl font-bold text-amber-900">Konark Sun Temple</h2>
+                  <p id="site-sub" class="text-sm text-amber-700/80">13th century, Odisha · UNESCO Iconic</p>
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                  <div class="text-sm text-amber-700/80">Progress</div>
+                  <div class="w-36 progress-track"><div id="visit-progress" class="progress-fill"></div></div>
+                </div>
+              </div>
+
+              <div id="site-description" class="mt-3 text-amber-800 leading-relaxed"></div>
+
+              <div class="mt-4 flex gap-2">
+                <button id="play-audio" class="py-2 px-4 rounded-xl border border-amber-200 flex items-center gap-2">🔊 <span id="audio-btn-text">Listen</span></button>
+               <button id="suggestions-btn" class="py-2 px-4 rounded-xl border border-amber-200">Suggestions</button>
+
+                <button id="fav-btn" class="py-2 px-4 rounded-xl border border-amber-200">☆ Save</button>
+              </div>
+
+              <div class="mt-4 grid grid-cols-2 gap-2">
+                <button id="open-quiz" class="py-2 px-3 rounded-xl bg-amber-500 text-white flex items-center justify-center gap-2">Take Site Quiz</button>
+                <button id="learn-more" class="py-2 px-3 rounded-xl border border-amber-200">Timeline & Facts</button>
+              </div>
+<!-- Ticket Booking Button -->
+<div class="mt-2">
+  <button id="ticket-btn"
+    class="w-full py-2 px-3 rounded-xl bg-amber-600 text-white shadow hidden">
+    🎟 Book Ticket
+  </button>
+</div>
+
+              <div class="mt-4 text-xs text-amber-700/80">Tip: For best AR experience open on mobile and tap "View in AR".</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="glass rounded-2xl p-4 shadow-md">
+            <h3 class="font-semibold text-amber-900">Site Timeline & Trivia</h3>
+            <div id="timeline" class="mt-3 text-amber-800 text-sm leading-relaxed"></div>
+          </div>
+
+          <div class="glass rounded-2xl p-4 shadow-md">
+            <h3 class="font-semibold text-amber-900">Community Quiz Collection</h3>
+            <p class="text-sm text-amber-700/80 mt-2">Play multi-site quizzes, view leaderboard, get badges.</p>
+            <div class="mt-3 flex gap-2">
+              <button id="play-all-quiz" class="py-2 px-3 rounded-xl bg-amber-500 text-white">Play All</button>
+              <button id="leaderboard-btn" class="py-2 px-3 rounded-xl border">Leaderboard</button>
+            </div>
+            <div id="leaderboard" class="mt-4 hidden text-sm text-amber-800"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- More Info Modal -->
+    <div id="info-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-40">
+      <div class="bg-white rounded-2xl p-6 max-w-2xl w-full shadow-xl">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 id="info-modal-title" class="text-xl font-bold text-amber-900">More about site</h3>
+            <p id="info-modal-sub" class="text-sm text-amber-700/80">Timeline, facts and deeper context</p>
+          </div>
+          <button id="close-info" class="text-gray-600">✕</button>
+        </div>
+        <div id="info-modal-body" class="mt-4 text-amber-800 text-sm leading-relaxed"></div>
+        <div class="mt-4 text-right"><button id="info-close-cta" class="py-2 px-4 rounded-xl bg-amber-600 text-white">Close</button></div>
+      </div>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div id="quiz-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-2xl p-6 max-w-xl w-full shadow-xl">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 id="quiz-title" class="text-xl font-bold text-amber-900" tabindex="-1">Quiz</h3>
+            <p id="quiz-sub" class="text-sm text-amber-700/80">Answer the questions to score badges</p>
+          </div>
+          <button id="close-quiz" class="text-gray-600">✕</button>
+        </div>
+
+        <div class="mt-4">
+          <div id="quiz-progress-text" class="text-sm text-amber-700/80">Question <span id="q-index">1</span> / <span id="q-total">3</span></div>
+          <div class="progress-track mt-2"><div id="quiz-progress" class="progress-fill"></div></div>
+        </div>
+
+        <div id="quiz-body" class="mt-4">
+          <div id="quiz-question" class="text-lg font-semibold text-amber-900"></div>
+          <div id="quiz-options" class="grid grid-cols-1 gap-3 mt-3"></div>
+          <div id="quiz-feedback" class="mt-3 font-semibold"></div>
+        </div>
+
+        <div class="mt-4 flex justify-between items-center">
+          <div id="quiz-score" class="text-sm text-amber-700/80">Score: <span id="score-val">0</span></div>
+          <div>
+            <button id="prev-q" class="mr-2 py-2 px-3 rounded-xl border">Prev</button>
+            <button id="next-q" class="py-2 px-3 rounded-xl bg-amber-600 text-white">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="fixed right-6 bottom-6 bg-amber-800 text-white px-4 py-2 rounded-xl shadow hidden"></div>
+    <audio id="audio-player"></audio>
+  </div>
+
+  <!-- Gemini Chatbot UI -->
+<!-- Chatbot UI -->
+<!-- Chatbot UI -->
+<div id="chatbot-container" class="fixed bottom-6 right-6 z-50">
+
+  <!-- Toggle Button -->
+  <button
+    id="chatbot-toggle"
+    class="bg-amber-600 text-white rounded-full p-3 shadow-lg"
+  >
+    💬
+  </button>
+
+  <!-- Chatbot Box (starts hidden) -->
+  <div
+    id="chatbot-box"
+    class="hidden bg-white rounded-2xl shadow-xl w-80 max-w-full p-4 mt-2 flex flex-col"
+  >
+
+    <!-- Suggested Quick Messages -->
+    <div id="chatbot-suggestions" class="flex flex-wrap gap-2 mb-3">
+      <button class="suggestion-chip" data-suggestion="Tell me about the Konark Sun Temple.">Konark info</button>
+      <button class="suggestion-chip" data-suggestion="Show me nearby heritage sites in India.">Nearby sites</button>
+      <button class="suggestion-chip" data-suggestion="Start a guided walk for any one monument.">Guided walk</button>
+      <button class="suggestion-chip" data-suggestion="Explain the history of this monument.">Explain monument</button>
+    </div>
+
+    <!-- Chat messages -->
+    <div id="chatbot-messages" class="h-56 overflow-y-auto text-sm mb-2"></div>
+
+    <!-- Chat input -->
+    <form id="chatbot-form" class="flex gap-2">
+      <input
+        id="chatbot-input"
+        type="text"
+        placeholder="Ask about heritage..."
+        class="flex-1 border rounded-xl p-2 text-sm"
+        autocomplete="off"
+      />
+      <button class="bg-amber-500 text-white rounded-xl px-3 text-sm">Send</button>
+    </form>
+
+  </div>
+</div>
+<!-- ⭐⭐⭐ PASTE PROFILE MODAL HERE ⭐⭐⭐ -->
+<div id="profile-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl glass">
+    <h2 class="text-2xl font-bold text-amber-900 mb-4">👤 Your Profile</h2>
+
+    <div class="mb-4">
+      <p class="text-sm text-amber-700/80">Name</p>
+      <p id="profile-name" class="text-lg font-semibold text-amber-900"></p>
+    </div>
+
+    <div class="mb-4">
+      <p class="text-sm text-amber-700/80">Tickets Booked</p>
+      <div id="profile-tickets" class="text-amber-900 text-sm"></div>
+    </div>
+
+    <div class="mb-4">
+      <p class="text-sm text-amber-700/80">Recently Visited</p>
+      <div id="profile-recent" class="text-amber-900 text-sm"></div>
+    </div>
+
+    <div class="mt-4 text-right">
+      <button id="close-profile" class="py-2 px-4 rounded-xl bg-amber-600 text-white">Close</button>
+    </div>
+  </div>
+</div>
+<!-- ⭐⭐⭐ END OF PROFILE MODAL ⭐⭐⭐ -->
+ <!-- ⭐ SUGGESTIONS POPUP MODAL -->
+<div id="suggestions-modal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-2xl p-6 max-w-lg w-full shadow-xl glass overflow-y-auto max-h-[80vh]">
+
+    <h2 class="text-2xl font-bold text-amber-900 mb-4">✨ Suggestions for You</h2>
+
+    <section class="mb-6">
+      <h3 class="text-lg font-semibold text-amber-900 mb-2">Recommended Sites</h3>
+      <div id="suggest-sites" class="text-sm text-amber-800 space-y-1"></div>
+    </section>
+
+    <section class="mb-6">
+      <h3 class="text-lg font-semibold text-amber-900 mb-2">Nearby Hotels</h3>
+      <div id="suggest-hotels" class="text-sm text-amber-800 space-y-1"></div>
+    </section>
+
+    <section>
+      <h3 class="text-lg font-semibold text-amber-900 mb-2">Activities & Experiences</h3>
+      <div id="suggest-activities" class="text-sm text-amber-800 space-y-1"></div>
+    </section>
+
+    <div class="mt-6 text-right">
+      <button id="close-suggestions" class="py-2 px-4 rounded-xl bg-amber-600 text-white">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+    // ---------- App Data (inline fallback) ----------
+  const heritageDataFallback = [
+  {
+    id: 'konark',
+    name: 'Konark Sun Temple',
+    location: 'Konark, Odisha',
+    latitude: 19.8876,
+    longitude: 86.0945,
+    era: '1250 CE',
+    ticketLink: "https://asi.payumoney.com/quick/stk",
+    recommend: ["jagannath", "taj"],
+hotels: [
+  { name: "Hotels near Konark", url: "https://www.makemytrip.com/hotels/konark-hotels.html" }
+],
+activities: [
+  { name: "Chandrabhaga Beach", url: "https://www.google.com/maps?q=Chandrabhaga+Beach" },
+  { name: "Konark Handicraft Market", url: "https://www.google.com/maps?q=Konark+Market" },
+  { name: "Konark Pitha Shops", url: "https://www.google.com/maps?q=Konark+Pitha" }
+],
+
+    modelSrc: 'models/konark.glb',
+    poster: 'assets/posters/konark-poster.jpg',
+    thumb: 'assets/thumbs/konark-thumb.jpg',
+    description:
+      'A 13th-century Sun Temple built by Narasimhadeva I — famed for its chariot-shaped layout and exquisite stone carvings.',
+    audioSrc: 'audio/konark.mp3',
+    facts: [
+      {year:1250, text:'Temple completed under Narasimhadeva I.'},
+      {year:1800, text:'Parts dismantled and sculptures removed.'},
+      {year:1984, text:'Modern restoration initiatives started.'}
+    ],
+    quiz: [
+      {q:'Which king built the Konark Sun Temple?', opts:['Narasimhadeva I','Ashoka','Raja Raja Chola'], a:0},
+      {q:'The temple is designed as a colossal what?', opts:['Chariot','Lotus','Temple-tower'], a:0},
+      {q:'Konark is famous for carvings of?', opts:['Dancers & animals','Metalwork','Calligraphy'], a:0}
+    ]
+  },
+
+  {
+    id: 'taj',
+    name: 'Taj Mahal',
+    location: 'Agra, Uttar Pradesh',
+    latitude: 27.1751,
+    longitude: 78.0421,
+    era: '1631–1653',
+    ticketLink: "https://asi.payumoney.com/quick/taj",
+    recommend: ["konark", "jagannath"],
+
+hotels: [
+  { name: "Hotels near Taj Mahal (Agra)", url: "https://www.makemytrip.com/hotels/agra-hotels.html" },
+  { name: "Luxury Hotels in Agra", url: "https://www.makemytrip.com/hotels/luxury-hotels-in-agra.html" }
+],
+
+activities: [
+  { name: "Sadar Bazaar (Food + Shopping)", url: "https://www.google.com/maps?q=Sadar+Bazaar+Agra" },
+  { name: "Panchi Petha Shop (Famous Agra Sweet)", url: "https://www.google.com/maps?q=Panchi+Petha" },
+  { name: "Taj Nature Walk", url: "https://www.google.com/maps?q=Taj+Nature+Walk" },
+  { name: "Agra Fort Light & Sound Show", url: "https://www.google.com/maps?q=Agra+Fort" }
+],
+
+    modelSrc: 'models/tajmahal.glb',
+    poster: 'assets/posters/taj-poster.jpg',
+    thumb: 'assets/thumbs/taj-thumb.jpg',
+    description:
+      'The ivory-white marble mausoleum commissioned by Mughal emperor Shah Jahan in memory of Mumtaz Mahal.',
+    audioSrc: 'audio/tajmahal.mp3',
+    facts: [
+      {year:1632, text:'Construction begins under Shah Jahan.'},
+      {year:1653, text:'Main mausoleum completed.'},
+      {year:2007, text:'UNESCO World Heritage recognition.'}
+    ],
+    quiz: [
+      {q:'For whom was the Taj Mahal built?', opts:['Mumtaz Mahal','Jodha Bai','Nur Jahan'], a:0},
+      {q:'Which material is primarily used?', opts:['White marble','Red sandstone','Granite'], a:0}
+    ]
+  },
+
+  {
+    id: 'jagannath',
+    name: 'Jagannath Temple',
+    location: 'Puri, Odisha',
+    latitude: 19.8135,
+    longitude: 85.8312,
+    era: '12th Century (current form)',
+    ticketLink: "https://www.shreejagannatha.in/darsan-facilities/",
+    recommend: ["konark", "taj"],
+
+hotels: [
+  { name: "Hotels in Puri (Near Jagannath Temple)", url: "https://www.makemytrip.com/hotels/puri-hotels.html" },
+  { name: "Beach Hotels in Puri", url: "https://www.makemytrip.com/hotels/puri-beach-hotels.html" }
+],
+
+activities: [
+  { name: "Puri Beach", url: "https://www.google.com/maps?q=Puri+Beach" },
+  { name: "Ananda Bazaar (Temple Food Court)", url: "https://www.google.com/maps?q=Ananda+Bazar+Puri" },
+  { name: "Puri Local Market (Shell Crafts)", url: "https://www.google.com/maps?q=Puri+Market" },
+  { name: "Khaja Shops (Famous Puri Sweet)", url: "https://www.google.com/maps?q=Khaja+Puri" }
+],
+
+    modelSrc: 'models/jagannath.glb',
+    poster: 'assets/posters/jagannath-poster.jpg',
+    thumb: 'assets/thumbs/jagannath-thumb.jpg',
+    description:
+      'A major Hindu temple dedicated to Lord Jagannath — famous for the annual Rath Yatra chariot festival.',
+    audioSrc: 'audio/jagannath.mp3',
+    facts: [
+      {year:1100, text:'Earliest forms established.'},
+      {year:1200, text:'Significant reconstructions.'},
+      {year:1900, text:'Modern pilgrim facilities added.'}
+    ],
+    quiz: [
+      {q:'The Jagannath Temple festival is called?', opts:['Rath Yatra','Diwali','Holi'], a:0}
+    ]
+  }
+];
+
+
+
+    // ---------- State ----------
+    let heritageData = []; // will be filled by fetch or fallback
+    let currentSite = null;
+    let favorites = JSON.parse(localStorage.getItem('pradakshina_favs')||'[]');
+    let visitedProgress = JSON.parse(localStorage.getItem('pradakshina_visited')||'{}');
+    let quizState = {index:0,score:0,answers:[]};
+
+    // ---------- Elements ----------
+    const siteListEl = document.getElementById('site-list');
+    const viewer = document.getElementById('viewer');
+    const siteTitle = document.getElementById('site-title');
+    const siteSub = document.getElementById('site-sub');
+    const siteDesc = document.getElementById('site-description');
+    const playAudioBtn = document.getElementById('play-audio');
+    const ticketBtn = document.getElementById("ticket-btn");
+
+    const audioPlayer = document.getElementById('audio-player');
+    const favBtn = document.getElementById('fav-btn');
+    const savedCount = document.getElementById('saved-count');
+    const visitProgressEl = document.getElementById('visit-progress');
+    const searchInput = document.getElementById('search-input');
+    const toast = document.getElementById('toast');
+
+    const infoModal = document.getElementById('info-modal');
+    const infoModalTitle = document.getElementById('info-modal-title');
+    const infoModalBody = document.getElementById('info-modal-body');
+    const closeInfo = document.getElementById('close-info');
+    const infoCloseCta = document.getElementById('info-close-cta');
+
+    // Quiz modal elements (note: some are used later)
+    const playAllQuizBtn = document.getElementById('play-all-quiz');
+    const leaderboardEl = document.getElementById('leaderboard');
+
+    // ---------- Helpers ----------
+    function showToast(msg, time=2200){ toast.textContent = msg; toast.classList.remove('hidden'); setTimeout(()=>toast.classList.add('hidden'), time); }
+    function saveFavs(){ localStorage.setItem('pradakshina_favs', JSON.stringify(favorites)); updateSavedCount(); }
+    function updateSavedCount(){ savedCount.textContent = favorites.length }
+    function setCurrentSiteById(id){ 
+  const s = heritageData.find(x => x.id === id); 
+  if (!s) return; 
+
+  currentSite = s;
+
+  // ⭐ Track recent visits (save last 5 visited sites)
+  let recent = JSON.parse(localStorage.getItem("pradakshina_recent") || "[]");
+  recent.unshift(s.name);
+  recent = [...new Set(recent)].slice(0, 5);
+  localStorage.setItem("pradakshina_recent", JSON.stringify(recent));
+
+  renderCurrentSite();
+}
+
+    function formatFacts(facts){ return facts.map(f=>`<div class=\"mb-2\"><strong>${f.year}:</strong> ${f.text}</div>`).join('') }
+    function updateVisitProgress(){ const val = visitedProgress[currentSite.id] || 0; visitProgressEl.style.width = `${Math.min(100,val)}%`; }
+
+    // ---------- Render functions ----------
+    function renderSiteList(filter=''){ siteListEl.innerHTML = ''; const list = heritageData.filter(s => s.name.toLowerCase().includes(filter.toLowerCase()) || s.location.toLowerCase().includes(filter.toLowerCase()));
+      list.forEach(site=>{
+        const div = document.createElement('div'); div.className = 'p-3 rounded-xl border border-amber-100 bg-white flex items-center gap-3 hover:shadow-md cursor-pointer';
+
+        const img = document.createElement('img'); img.src = site.thumb || site.poster || 'assets/posters/placeholder-poster.jpg'; img.alt = site.name; img.className = 'w-16 h-16 rounded-lg object-cover shadow-sm';
+        img.onerror = () => { img.src = 'assets/posters/placeholder-poster.jpg'; }
+
+        const meta = document.createElement('div'); meta.className = 'flex-1';
+        meta.innerHTML = `
+          <div class=\"flex items-center justify-between\"> 
+            <div><div class=\"font-semibold text-amber-900\">${site.name}</div><div class=\"text-xs text-amber-700/80\">${site.location} · ${site.era}</div></div>
+            <div class=\"text-sm text-amber-700/80\">${(visitedProgress[site.id]||0)}%</div>
+          </div>
+          <div class=\"text-xs text-amber-700/70 mt-1\">${site.description.slice(0,120)}...</div>
+        `;
+
+        div.appendChild(img); div.appendChild(meta);
+        div.addEventListener('click', ()=>{ setCurrentSiteById(site.id); showToast('Loaded ' + site.name); });
+        siteListEl.appendChild(div);
+      }) }
+
+function renderCurrentSite() {
+  viewer.src = currentSite.modelSrc || currentSite.model || 'models/placeholder.glb';
+  if (currentSite.poster) viewer.setAttribute('poster', currentSite.poster);
+
+  siteTitle.textContent = currentSite.name;
+  siteSub.textContent = `${currentSite.location} · ${currentSite.era}`;
+
+  siteDesc.innerHTML = `
+    <p>${currentSite.description}</p>
+    <div class="mt-3 text-sm text-amber-700/80">
+      ${currentSite.facts.slice(0, 2).map(f => `<div><strong>${f.year}</strong> — ${f.text}</div>`).join('')}
+    </div>
+  `;
+
+  audioPlayer.src = currentSite.audioSrc || currentSite.audio;
+  updateFavBtn();
+  updateVisitProgress();
+
+  quizState = { index: 0, score: 0, answers: [] };
+  renderTimeline();
+
+  // ⭐ Ticket button logic (Correct)
+  if (currentSite.ticketLink) {
+    ticketBtn.classList.remove("hidden");
+    ticketBtn.onclick = () => {
+  window.open(currentSite.ticketLink, "_blank");
+
+  // ⭐ Save ticket booking history
+  let tickets = JSON.parse(localStorage.getItem("pradakshina_tickets") || "[]");
+  tickets.push({
+    site: currentSite.name,
+    date: new Date().toLocaleString()
+  });
+  localStorage.setItem("pradakshina_tickets", JSON.stringify(tickets));
+};
+
+  } else {
+    ticketBtn.classList.add("hidden");
+  }
+}
+
+    function updateFavBtn(){ if(favorites.includes(currentSite.id)){ favBtn.textContent = '★ Saved'; favBtn.classList.add('bg-amber-100') } else { favBtn.textContent = '☆ Save'; favBtn.classList.remove('bg-amber-100') } updateSavedCount(); }
+
+    // ---------- Audio controls ----------
+    playAudioBtn.addEventListener('click', ()=>{ if(!audioPlayer.src){ showToast('No narration available for this site'); return } if(audioPlayer.paused){ audioPlayer.play(); playAudioBtn.classList.add('bg-amber-100'); document.getElementById('audio-btn-text').textContent='Pause' } else{ audioPlayer.pause(); playAudioBtn.classList.remove('bg-amber-100'); document.getElementById('audio-btn-text').textContent='Listen' } });
+    audioPlayer.addEventListener('ended', ()=>{ playAudioBtn.classList.remove('bg-amber-100'); document.getElementById('audio-btn-text').textContent='Listen' });
+
+    // ---------- Favorites & walk ----------
+    // favBtn behaviour will be added in patched section below
+
+    document.getElementById('show-favs').addEventListener('click', ()=>{ if(favorites.length===0){ showToast('No favorites yet — save some sites!'); return } renderSiteList(); setCurrentSiteById(favorites[0]); });
+
+    document.getElementById('start-walk').addEventListener('click', ()=>{ const route = favorites.length?favorites:heritageData.map(s=>s.id); if(route.length===0){ showToast('No sites to walk through'); return } let i=0; function visitNext(){ if(i>=route.length){ showToast('Guided walk complete'); return } setCurrentSiteById(route[i]); visitedProgress[route[i]] = Math.min((visitedProgress[route[i]]||0)+34,100); localStorage.setItem('pradakshina_visited', JSON.stringify(visitedProgress)); updateVisitProgress(); i++; setTimeout(visitNext, 900); } visitNext(); });
+
+    // ---------- Search ----------
+    searchInput.addEventListener('input', (e)=>{ renderSiteList(e.target.value) });
+
+    // ---------- Reset ----------
+    document.getElementById('reset-btn').addEventListener('click', ()=>{ if(confirm('Reset saved data?')){ localStorage.removeItem('pradakshina_favs'); localStorage.removeItem('pradakshina_visited'); favorites=[]; visitedProgress={}; saveFavs(); renderSiteList(); renderCurrentSite(); showToast('Reset done') } });
+
+    // ---------- Timeline / More Info ----------
+    function renderTimeline(){ const t = document.getElementById('timeline'); t.innerHTML = formatFacts(currentSite.facts); }
+    document.getElementById('learn-more').addEventListener('click', ()=>{ // open modal with full facts and extended description
+      infoModalTitle.textContent = currentSite.name + ' — Timeline & Facts';
+      infoModalBody.innerHTML = `<p class="mb-3">${currentSite.description}</p><div class="mt-3">${formatFacts(currentSite.facts)}</div>`;
+      infoModal.classList.remove('hidden');
+    });
+   
+    closeInfo.addEventListener('click', ()=>infoModal.classList.add('hidden'));
+    infoCloseCta.addEventListener('click', ()=>infoModal.classList.add('hidden'));
+
+    // ---------- Quiz modal elements & Favorites (patched) ----------
+    const quizModal = document.getElementById('quiz-modal');
+    const quizTitle = document.getElementById('quiz-title');
+    const quizSub = document.getElementById('quiz-sub'); // <<-- missing in previous version
+    const quizQuestion = document.getElementById('quiz-question');
+    const quizOptions = document.getElementById('quiz-options');
+    const quizFeedback = document.getElementById('quiz-feedback');
+    const quizProgressFill = document.getElementById('quiz-progress');
+    const qIndex = document.getElementById('q-index');
+    const qTotal = document.getElementById('q-total');
+    const scoreVal = document.getElementById('score-val');
+    const nextQ = document.getElementById('next-q');
+    const prevQ = document.getElementById('prev-q');
+    const openQuizBtn = document.getElementById('open-quiz');
+
+    let showingOnlyFavs = false; // toggle state for Favorites view
+
+    // Improved Favorites behavior: toggle between all and only favorites
+    document.getElementById('show-favs').addEventListener('click', () => {
+      if (!favorites || favorites.length === 0) {
+        showToast('No favorites yet — save some sites!');
+        return;
+      }
+      showingOnlyFavs = !showingOnlyFavs;
+      if (showingOnlyFavs) {
+        // render only favorite sites in the list
+        const filtered = heritageData.filter(s => favorites.includes(s.id));
+        renderSiteListFiltered(filtered);
+        setCurrentSiteById(filtered[0].id);
+        showToast('Showing favorites (click Favorites to show all)');
+      } else {
+        renderSiteList(''); // show all again
+        showToast('Showing all sites');
+      }
+    });
+
+    // helper to render a specific list (favorites view)
+    function renderSiteListFiltered(list) {
+      siteListEl.innerHTML = '';
+      list.forEach(site => {
+        const div = document.createElement('div');
+        div.className = 'p-3 rounded-xl border border-amber-100 bg-white flex items-center gap-3 hover:shadow-md cursor-pointer';
+        const img = document.createElement('img');
+        img.src = site.thumb || site.poster || 'assets/posters/placeholder-poster.jpg';
+        img.alt = site.name;
+        img.className = 'w-16 h-16 rounded-lg object-cover shadow-sm';
+        img.onerror = () => { img.src = 'assets/posters/placeholder-poster.jpg'; };
+        const meta = document.createElement('div'); meta.className = 'flex-1';
+        meta.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div><div class="font-semibold text-amber-900">${site.name}</div><div class="text-xs text-amber-700/80">${site.location} · ${site.era}</div></div>
+            <div class="text-sm text-amber-700/80">${(visitedProgress[site.id]||0)}%</div>
+          </div>
+          <div class="text-xs text-amber-700/70 mt-1">${site.description.slice(0,120)}...</div>
+        `;
+        div.appendChild(img); div.appendChild(meta);
+        div.addEventListener('click', ()=>{ setCurrentSiteById(site.id); showToast('Loaded ' + site.name); });
+        siteListEl.appendChild(div);
+      });
+    }
+
+    // Favorite/Save button behaviour (unchanged, but re-ensure existence)
+    favBtn.addEventListener('click', () => {
+      if (!currentSite) { showToast('No site selected'); return; }
+      if (favorites.includes(currentSite.id)) {
+        favorites = favorites.filter(id => id !== currentSite.id);
+        showToast('Removed from favorites');
+      } else {
+        favorites.push(currentSite.id);
+        showToast('Added to favorites');
+      }
+      saveFavs();
+      updateFavBtn();
+      // If we were viewing only favorites and user removed the current, refresh view
+      if (showingOnlyFavs) {
+        const filtered = heritageData.filter(s => favorites.includes(s.id));
+        if (filtered.length === 0) {
+          // nothing left in favorites: go back to full list
+          showingOnlyFavs = false;
+          renderSiteList('');
+          showToast('No favorites left — showing all sites');
+        } else {
+          renderSiteListFiltered(filtered);
+          // If currentSite was removed, change to the new first favorite
+          if (!favorites.includes(currentSite.id)) setCurrentSiteById(filtered[0].id);
+        }
+      }
+    });
+
+    // ---------- Quiz logic fixes and improvements ----------
+    function openSiteQuiz() {
+      if (!currentSite || !currentSite.quiz || currentSite.quiz.length === 0) {
+        showToast('No quiz available for this site');
+        return;
+      }
+      quizModal.classList.remove('hidden');
+      quizTitle.textContent = currentSite.name + ' — Quick Quiz';
+      quizSub.textContent = 'Test your knowledge';
+      quizState = { index: 0, score: 0, answers: [] };
+      // start with Next disabled until an answer is selected
+      nextQ.disabled = true;
+      prevQ.disabled = true;
+      renderQuizQuestion();
+      // focus the quiz title for accessibility
+      quizTitle.focus?.();
+    }
+
+    function renderQuizQuestion() {
+      const q = currentSite.quiz[quizState.index];
+      if (!q) { showQuizResults(); return; }
+      qIndex.textContent = quizState.index + 1;
+      qTotal.textContent = currentSite.quiz.length;
+      quizQuestion.textContent = q.q;
+      quizOptions.innerHTML = '';
+      quizFeedback.textContent = '';
+      // disable Next until user answers
+      nextQ.disabled = true;
+      prevQ.disabled = quizState.index === 0;
+      const pct = Math.round(((quizState.index) / currentSite.quiz.length) * 100);
+      quizProgressFill.style.width = pct + '%';
+      q.opts.forEach((opt, i) => {
+        const b = document.createElement('button');
+        b.className = 'w-full text-left p-3 rounded-xl border';
+        b.textContent = opt;
+        b.onclick = () => selectQuizOption(i);
+        quizOptions.appendChild(b);
+      });
+      scoreVal.textContent = quizState.score;
+    }
+
+    function selectQuizOption(idx) {
+      const q = currentSite.quiz[quizState.index];
+      const correct = q.a;
+      const buttons = Array.from(quizOptions.children);
+      buttons.forEach(b => { b.disabled = true; });
+      if (idx === correct) {
+        quizState.score++;
+        quizFeedback.textContent = 'Correct!';
+        quizFeedback.style.color = '#059669';
+        buttons[idx].classList.add('correct-answer');
+      } else {
+        quizFeedback.textContent = 'Incorrect';
+        quizFeedback.style.color = '#ef4444';
+        buttons[idx].classList.add('wrong-answer');
+        if (buttons[correct]) buttons[correct].classList.add('correct-answer');
+      }
+      quizState.answers.push({ q: q.q, selected: idx, correct });
+      scoreVal.textContent = quizState.score;
+      nextQ.disabled = false; // now allow user to go next
+    }
+
+    function showQuizResults() {
+      quizQuestion.textContent = 'Quiz Complete!';
+      quizOptions.innerHTML = `<div class="text-center text-4xl font-bold text-amber-600">${quizState.score} / ${currentSite.quiz.length}</div><div class="mt-3 text-sm text-amber-700/80">Well done! Your result is saved locally.</div>`;
+      quizFeedback.textContent = '';
+      nextQ.disabled = true;
+      prevQ.disabled = true;
+      // save score
+      const scores = JSON.parse(localStorage.getItem('pradakshina_scores') || '{}');
+      if (!scores[currentSite.id]) scores[currentSite.id] = [];
+      scores[currentSite.id].push({ score: quizState.score, when: new Date().toISOString() });
+      localStorage.setItem('pradakshina_scores', JSON.stringify(scores));
+      buildLeaderboard();
+    }
+
+    // Quiz modal controls
+    nextQ.addEventListener('click', () => {
+      if (quizState.index < currentSite.quiz.length - 1) {
+        quizState.index++;
+        renderQuizQuestion();
+      } else {
+        showQuizResults();
+        nextQ.disabled = true;
+      }
+    });
+    prevQ.addEventListener('click', () => {
+      if (quizState.index > 0) {
+        quizState.index--;
+        renderQuizQuestion();
+      }
+    });
+    document.getElementById('close-quiz').addEventListener('click', () => { quizModal.classList.add('hidden'); });
+    openQuizBtn.addEventListener('click', openSiteQuiz);
+
+    // Play all quizzes (multi-site)
+    playAllQuizBtn.addEventListener('click', ()=>{ openSiteQuiz(); });
+
+    // Leaderboard builder
+    function buildLeaderboard(){ const scores = JSON.parse(localStorage.getItem('pradakshina_scores')||'{}'); leaderboardEl.innerHTML=''; const rows=[]; for(const sid in scores){ const best = Math.max(...scores[sid].map(x=>x.score)); rows.push({sid,best}) } rows.sort((a,b)=>b.best-a.best); if(rows.length===0){ leaderboardEl.innerHTML='<div class="text-sm text-amber-700/80">No scores yet — take some quizzes!</div>'; return } const html = rows.map(r=>`<div class="py-1 flex justify-between"><div>${heritageData.find(s=>s.id===r.sid).name}</div><div class="font-semibold">${r.best}</div></div>`).join(''); leaderboardEl.innerHTML = html; leaderboardEl.classList.remove('hidden'); }
+    document.getElementById('leaderboard-btn').addEventListener('click', buildLeaderboard);
+
+    // ---------- Theme toggle & share ----------
+    document.getElementById('theme-toggle').addEventListener('click', ()=>{ document.documentElement.classList.toggle('dark'); document.body.classList.toggle('bg-neutral-900'); showToast('Toggled theme (experiment)'); });
+    document.getElementById('share-app').addEventListener('click', async ()=>{ try{ if(navigator.share){ await navigator.share({title:'Pradakshina — AR Heritage', text:'Check this AR heritage demo', url:location.href}); showToast('Shared!') } else { navigator.clipboard.writeText(location.href); showToast('Link copied to clipboard') } }catch(e){ showToast('Unable to share') } });
+
+    // ---------- DIAGNOSTIC SNIPPET (will print missing assets) ----------
+    const checkPaths = [
+      'assets/posters/konark-poster.jpg',
+      'assets/posters/taj-poster.jpg',
+      'assets/posters/jagannath-poster.jpg',
+      'assets/thumbs/konark-thumb.jpg',
+      'assets/thumbs/taj-thumb.jpg',
+      'assets/thumbs/jagannath-thumb.jpg',
+      'assets/icons/icon-192.png'
+    ];
+
+    function runDiagnostics(){ checkPaths.forEach(path => {
+      const img = new Image();
+      img.onload  = () => console.log('%cOK   ','color:green', path);
+      img.onerror = () => console.error('%cMISSING','color:red', path);
+      img.src = path + '?_=' + Date.now(); // cache-buster
+    }); }
+
+    // ---------- Initialize: try loading data/sites.json first, else fallback ----------
+    function initializeApp(data){ heritageData = data || heritageDataFallback; renderSiteList(); setCurrentSiteById(heritageData[0].id); updateSavedCount(); buildLeaderboard(); }
+
+    // Try to fetch data/sites.json; if it fails, use fallback dataset
+    fetch('data/sites.json').then(r=>{ if(!r.ok) throw new Error('no sites.json'); return r.json(); }).then(d=>{ initializeApp(d); runDiagnostics(); }).catch(e=>{ console.warn('sites.json not found — using fallback'); initializeApp(heritageDataFallback); runDiagnostics(); });
+
+    // ---------- Small accessibility: keyboard shortcuts ----------
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'q'){ openSiteQuiz(); } if(e.key === 'f'){ favBtn.click(); } });
+
+    // Developer notes
+    /*
+      - Place images in assets/posters and assets/thumbs with exact filenames used in sites.json/fallback.
+      - Run the diagnostic (console) to see MISSING/OK lines and fix filenames/paths accordingly.
+      - model-viewer requires secure context for AR features. Serve via http-server or live-server.
+    */
+   // Gemini Chatbot logic
+const GEMINI_API_KEY = 'YOUR_API_KEY_HERE'; // <-- Replace with your Gemini API key
+// Gemini Chatbot logic (frontend only talks to our Node proxy)
+// === Chatbot elements ===
+const chatbotToggle = document.getElementById('chatbot-toggle');
+const chatbotBox = document.getElementById('chatbot-box');
+const chatbotForm = document.getElementById('chatbot-form');
+const chatbotInput = document.getElementById('chatbot-input');
+const chatbotMessages = document.getElementById('chatbot-messages');
+
+// Open / close chatbot
+chatbotToggle.addEventListener('click', () => {
+  chatbotBox.classList.toggle('hidden');
+});
+
+// Helper: add message bubble
+function appendChat(sender, text) {
+  const div = document.createElement('div');
+  div.className =
+    sender === 'user'
+      ? 'mb-1 text-right'
+      : 'mb-1 text-left text-amber-800';
+  div.textContent = text;
+  chatbotMessages.appendChild(div);
+  chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+}
+
+// Send message → show user + "Thinking..." + call backend
+async function handleUserMessage(text) {
+  if (!text) return;
+
+  appendChat('user', text);
+  appendChat('bot', 'Thinking...');
+
+  try {
+    const reply = await geminiChat(text);
+    chatbotMessages.lastChild.textContent = reply || 'No reply from server.';
+  } catch (err) {
+    console.error(err);
+    chatbotMessages.lastChild.textContent =
+      'Sorry, something went wrong. Please try again.';
+  }
+}
+
+// Form submit handler
+chatbotForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = chatbotInput.value.trim();
+  if (!text) return;
+  chatbotInput.value = '';
+  await handleUserMessage(text);
+});
+
+// Quick suggestion clicks
+document.querySelectorAll('.suggestion-chip').forEach((chip) => {
+  chip.addEventListener('click', async () => {
+    const text = chip.dataset.suggestion || chip.textContent.trim();
+    await handleUserMessage(text);
+  });
+});
+
+// Talk to Node proxy (http://localhost:3000/gemini)
+async function geminiChat(prompt) {
+  try {
+    const res = await fetch('http://localhost:3000/gemini', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: prompt }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || `HTTP error ${res.status}`);
+    }
+
+    return data.reply;
+  } catch (e) {
+    console.error('Chat error:', e);
+    throw e;
+  }
+}
+// ------------------ NEAR ME FEATURE ------------------
+
+const nearMeBtn = document.getElementById('near-me-btn');
+const nearMeResults = document.getElementById('near-me-results');
+
+nearMeBtn.addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    showToast("Your browser doesn't support GPS");
+    return;
+  }
+
+  showToast("Requesting your location...");
+  
+  navigator.geolocation.getCurrentPosition(
+    handleLocation,
+    () => showToast("Please enable location permissions")
+  );
+});
+
+function handleLocation(pos) {
+  const userLat = pos.coords.latitude;
+  const userLon = pos.coords.longitude;
+
+  console.log("GPS:", userLat, userLon);
+
+  const sorted = heritageData
+    .map(site => ({
+      ...site,
+      distance: calcDistance(userLat, userLon, site.latitude, site.longitude)
+    }))
+    .sort((a, b) => a.distance - b.distance);
+
+  displayNearMe(sorted);
+}
+
+function calcDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat/2)**2 +
+    Math.cos(lat1*Math.PI/180) *
+    Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2)**2;
+
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function displayNearMe(list) {
+  nearMeResults.classList.remove('hidden');
+  nearMeResults.innerHTML = '';
+
+  list.forEach(site => {
+    const div = document.createElement('div');
+    div.className = "p-3 rounded-xl border bg-white shadow";
+
+    div.innerHTML = `
+      <div class="font-semibold text-amber-900">${site.name}</div>
+      <div class="text-xs text-amber-700/80 mb-2">${site.location}</div>
+      <div class="text-sm text-amber-600 font-medium">Distance: ${site.distance.toFixed(2)} km</div>
+      <button class="mt-2 px-3 py-1 bg-amber-600 text-white rounded-xl w-full">Open</button>
+    `;
+
+    div.querySelector("button").onclick = () => setCurrentSiteById(site.id);
+    nearMeResults.appendChild(div);
+  });
+}
+// ---------------- SUGGESTIONS POPUP ----------------
+const suggestionsBtn = document.getElementById("suggestions-btn");
+const suggestionsModal = document.getElementById("suggestions-modal");
+const closeSuggestions = document.getElementById("close-suggestions");
+
+const sSites = document.getElementById("suggest-sites");
+const sHotels = document.getElementById("suggest-hotels");
+const sActivities = document.getElementById("suggest-activities");
+
+suggestionsBtn.onclick = () => {
+  // Recommended Sites
+  if (currentSite.recommend && currentSite.recommend.length) {
+    sSites.innerHTML = currentSite.recommend.map(id => {
+      const site = heritageData.find(x => x.id === id);
+      return `<div>➡ <button onclick="setCurrentSiteById('${site.id}')" class="text-amber-700 underline">${site.name}</button></div>`;
+    }).join("");
+  } else {
+    sSites.innerHTML = "<div>No recommendations available.</div>";
+  }
+
+  // Hotels
+  if (currentSite.hotels && currentSite.hotels.length) {
+    sHotels.innerHTML = currentSite.hotels.map(h =>
+      `<div>🏨 <a href="${h.url}" target="_blank" class="text-amber-700 underline">${h.name}</a></div>`
+    ).join("");
+  } else {
+    sHotels.innerHTML = "<div>No hotels found.</div>";
+  }
+
+  // Activities
+  if (currentSite.activities && currentSite.activities.length) {
+    sActivities.innerHTML = currentSite.activities.map(a =>
+      `<div>⭐ <a href="${a.url}" target="_blank" class="text-amber-700 underline">${a.name}</a></div>`
+    ).join("");
+  } else {
+    sActivities.innerHTML = "<div>No activities found.</div>";
+  }
+
+  suggestionsModal.classList.remove("hidden");
+};
+
+closeSuggestions.onclick = () => {
+  suggestionsModal.classList.add("hidden");
+};
+
+/************************************************************
+ *                 WELCOME + LOGIN FLOW
+ ************************************************************/
+const welcomeScreen = document.getElementById("welcome-screen");
+const loginScreen = document.getElementById("login-screen");
+const loginChoice = document.getElementById("login-choice");
+const loginForm = document.getElementById("login-form");
+const mainApp = document.querySelector("main");
+
+// hide main app initially
+mainApp.style.display = "none";
+
+document.getElementById("start-btn").onclick = () => {
+  welcomeScreen.classList.add("hidden");
+  loginScreen.classList.remove("hidden");
+};
+
+// clicking login or create → show form
+document.getElementById("login-btn").onclick =
+document.getElementById("create-btn").onclick = () => {
+  loginChoice.classList.add("hidden");
+  loginForm.classList.remove("hidden");
+};
+
+// submit name/email → open the app
+document.getElementById("submit-login").onclick = () => {
+  const name = document.getElementById("user-name").value.trim();
+  const email = document.getElementById("user-email").value.trim();
+  localStorage.setItem("pradakshina_user", JSON.stringify({ name, email }));
+
+
+  if (!name || !email) {
+    alert("Please enter name and email (Prototype — no verification needed)");
+    return;
+  }
+
+  loginScreen.classList.add("hidden");
+  mainApp.style.display = "grid";
+};
+
+// ---------------- PROFILE DASHBOARD ----------------
+const profileBtn = document.getElementById("profile-btn");
+const profileModal = document.getElementById("profile-modal");
+const closeProfile = document.getElementById("close-profile");
+
+const profileName = document.getElementById("profile-name");
+const profileTickets = document.getElementById("profile-tickets");
+const profileRecent = document.getElementById("profile-recent");
+
+profileBtn.addEventListener("click", () => {
+  const user = JSON.parse(localStorage.getItem("pradakshina_user") || "{}");
+  const tickets = JSON.parse(localStorage.getItem("pradakshina_tickets") || "[]");
+  const recent = JSON.parse(localStorage.getItem("pradakshina_recent") || "[]");
+
+  // Show name
+  profileName.textContent = user.name || "Guest";
+
+  // Show tickets
+  profileTickets.innerHTML =
+    tickets.length === 0
+      ? "<p>No tickets booked yet.</p>"
+      : tickets
+          .map(t => `<div>🎟 ${t.site} — <span class='text-xs text-amber-700/80'>${t.date}</span></div>`)
+          .join("");
+
+  // Show recently visited
+  profileRecent.innerHTML =
+    recent.length === 0
+      ? "<p>No recent visits.</p>"
+      : recent.map(r => `<div>🕍 ${r}</div>`).join("");
+
+  profileModal.classList.remove("hidden");
+});
+
+// Close modal
+closeProfile.addEventListener("click", () => {
+  profileModal.classList.add("hidden");
+});
+
+
+  </script>
+
+</body>
+</html>
